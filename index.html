@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e0e12">
+  <meta name="description" content="Catalog your LP collection by scanning barcodes — powered by Discogs.">
+  <title>Vinyl Library</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 100 100" aria-hidden="true">
+        <defs>
+          <radialGradient id="labelGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffc94d"/>
+            <stop offset="100%" stop-color="#e08c00"/>
+          </radialGradient>
+        </defs>
+        <circle cx="50" cy="50" r="46" fill="#121216" stroke="#282832" stroke-width="2"/>
+        <circle cx="50" cy="50" r="34" fill="none" stroke="#1e1e26" stroke-width="1.5"/>
+        <circle cx="50" cy="50" r="28" fill="none" stroke="#1e1e26" stroke-width="1.5"/>
+        <circle cx="50" cy="50" r="15" fill="url(#labelGrad)"/>
+        <circle cx="50" cy="50" r="6" fill="none" stroke="#c88500" stroke-width="1.5"/>
+        <circle cx="50" cy="50" r="2.5" fill="#0e0e12"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Vinyl Library</h1>
+        <span id="countLabel" class="count"></span>
+      </div>
+    </div>
+    <div class="topbar-actions" id="authArea"></div>
+  </header>
+
+  <div id="publicBanner" class="public-banner hidden"></div>
+
+  <main>
+    <!-- AUTH -->
+    <section id="viewAuth" class="view hidden">
+      <div class="auth-card">
+        <div class="auth-logo">♪</div>
+        <h2 id="authTitle">Log in</h2>
+        <div class="auth-tabs">
+          <button id="tabLogin" class="auth-tab active">Log in</button>
+          <button id="tabSignup" class="auth-tab">Sign up</button>
+        </div>
+        <div class="auth-fields">
+          <input id="authUsername" type="text" placeholder="Username" autocomplete="username" autocapitalize="none">
+          <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password">
+        </div>
+        <button id="authSubmit" class="btn btn-primary btn-block">Log in</button>
+        <button id="authGoogle" class="btn btn-google btn-block">Continue with Google</button>
+        <div id="authError" class="auth-error"></div>
+        <p class="auth-note">Google sign-in uses the part of your email before the @ as your username.</p>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section id="viewLibrary" class="view hidden">
+      <div class="toolbar">
+        <input id="libSearch" type="search" placeholder="Search artist, title, song, band member, year…" class="search-input" autocomplete="off">
+        <select id="libSort" class="sort-select">
+          <option value="artist_asc" selected>Artist A–Z</option>
+          <option value="added_desc">Recently added</option>
+          <option value="title_asc">Title A–Z</option>
+          <option value="year_asc">Year (oldest first)</option>
+          <option value="year_desc">Year (newest first)</option>
+        </select>
+      </div>
+
+      <div class="subbar">
+        <div class="view-toggle" role="tablist">
+          <button data-view="grid" class="vt" role="tab">Grid</button>
+          <button data-view="crate" class="vt active" role="tab">Crate</button>
+          <button data-view="artists" class="vt" role="tab">By Artist</button>
+        </div>
+        <div class="subbar-right">
+          <button id="btnToggleFilters" class="btn btn-ghost btn-sm">Categories <span id="filterCount" class="fcount"></span></button>
+          <button id="btnClearFilters" class="btn btn-ghost btn-sm hidden">Clear</button>
+        </div>
+      </div>
+
+      <div id="filterPanel" class="filter-panel hidden"></div>
+
+      <div id="libraryGrid" class="grid"></div>
+      <div id="emptyState" class="empty hidden">
+        <div class="empty-icon">♪</div>
+        <h2 id="emptyTitle">Your shelves are empty</h2>
+        <p id="emptyText">Scan the barcode on an album sleeve to add your first record. Discogs fills in the details automatically.</p>
+        <button class="btn btn-primary" id="btnScanEmpty">Scan barcode</button>
+      </div>
+    </section>
+
+    <!-- SCAN -->
+    <section id="viewScan" class="view hidden">
+      <div class="narrow">
+        <button id="btnBackLibrary" class="btn btn-ghost btn-back">← Library</button>
+        <h2>Scan a barcode</h2>
+        <p class="hint">Point your camera at the barcode on the album sleeve. Keep it steady inside the box.</p>
+        <div id="qrReader" class="scanner"></div>
+        <div id="scanStatus" class="scan-status">Starting camera…</div>
+        <div class="divider"><span>or type it</span></div>
+        <div class="manual-row">
+          <input id="manualBarcode" type="text" inputmode="numeric" placeholder="EAN / UPC barcode" class="search-input" autocomplete="off">
+          <button id="btnManualLookup" class="btn btn-primary">Look up</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="viewResults" class="view hidden">
+      <div class="narrow">
+        <button id="btnBackFromResults" class="btn btn-ghost btn-back">← Library</button>
+        <h2>Select your pressing</h2>
+        <p id="resultsSummary" class="hint"></p>
+        <div id="resultsList" class="results"></div>
+      </div>
+    </section>
+
+    <!-- PREVIEW -->
+    <section id="viewPreview" class="view hidden">
+      <div class="wide">
+        <div id="previewBox" class="preview"></div>
+      </div>
+    </section>
+
+    <!-- DETAIL -->
+    <section id="viewDetail" class="view hidden">
+      <div class="wide">
+        <button id="btnBackFromDetail" class="btn btn-ghost btn-back">← Library</button>
+        <div id="detailBox" class="detail"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FRIENDS MODAL -->
+  <div id="friendsModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-head"><h3>Friends</h3><button id="btnCloseFriends" class="modal-close">✕</button></div>
+      <div class="modal-body">
+        <div class="friend-row">
+          <input id="friendInput" type="text" placeholder="Add a friend by username" autocapitalize="none">
+          <button id="btnAddFriend" class="btn btn-primary">Add</button>
+        </div>
+        <div class="friend-row">
+          <input id="browseInput" type="text" placeholder="Browse any user's library" autocapitalize="none">
+          <button id="btnBrowse" class="btn btn-ghost">View</button>
+        </div>
+        <div id="friendsList" class="friends-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCOS IMPORT MODAL -->
+  <div id="discogsModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-head"><h3>Discogs</h3><button id="btnCloseDiscogs" class="modal-close">✕</button></div>
+      <div class="modal-body">
+        <div class="discogs-section">
+          <div class="discogs-section-title">Account</div>
+          <p class="discogs-status" id="discogsOauthStatus">Not connected.</p>
+          <div class="discogs-actions">
+            <button id="btnDiscogsConnect" class="btn btn-primary hidden">Connect your Discogs account</button>
+            <button id="btnDiscogsDisconnect" class="btn btn-ghost hidden">Disconnect</button>
+          </div>
+          <p class="discogs-hint">Connect to add new records to your Discogs collection automatically, and sync without pasting a link.</p>
+        </div>
+        <hr class="discogs-divider">
+        <div class="discogs-section">
+          <div class="discogs-section-title">Sync collection</div>
+          <p class="discogs-status" id="discogsStatus"></p>
+          <div class="friend-row">
+            <input id="discogsInput" type="text" placeholder="Discogs username or collection link" autocapitalize="none">
+          </div>
+          <div class="discogs-actions">
+            <button id="btnDiscogsImport" class="btn btn-primary">Import</button>
+            <button id="btnDiscogsResync" class="btn btn-primary hidden">Re-sync</button>
+            <button id="btnDiscogsForget" class="btn btn-danger hidden">Forget link</button>
+          </div>
+          <div id="discogsResult" class="discogs-result"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHARE MODAL -->
+  <div id="shareModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-head"><h3>Share your library</h3><button id="btnCloseShare" class="modal-close">✕</button></div>
+      <div class="modal-body">
+        <p class="share-note">Anyone with this link can view your library — no login required.</p>
+        <div class="share-url-row">
+          <input id="shareUrl" type="text" readonly>
+          <button id="btnCopyShare" class="btn btn-primary">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="/vendor/html5-qrcode.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

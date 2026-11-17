@@ -1,0 +1,9 @@
+node_modules
+.env
+.env.*
+.git
+.vercel
+*.md
+make_icons.py
+_blob_test.js
+_test.js

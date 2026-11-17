@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Vercel
+.vercel/
+
+# Environment (keep the example committed)
+.env
+.env.*
+!.env.example
+
+# Logs / OS
+*.log
+.DS_Store
