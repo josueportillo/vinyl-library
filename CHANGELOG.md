@@ -9,7 +9,7 @@ Every time a feature is added or changed, add a new entry under `[Unreleased]`, 
 ## [Unreleased]
 
 ### Added
-- (none yet)
+- **Wikipedia description** on the album detail view — a short "About this album" paragraph pulled from the album's Wikipedia article (the intro extract, resolved server-side by searching artist + title), shown below the turntable animation and above the tracklist, with a "Source: Wikipedia" link for attribution.
 
 ### Changed
 - (none yet)

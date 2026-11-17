@@ -26,7 +26,7 @@ Built as a 100% web app (no native build) with a responsive mobile + desktop UI.
 - **Search** across artist, title, song, band member, or year.
 - **Sort** by Artist A–Z (default), Title A–Z, Year (oldest or newest first), or Recently added.
 - **Category filters** by genre/style.
-- **Album detail** — full tracklist, credits, and an image gallery with a lightbox (swipe to change image on mobile) plus a spinning turntable animation.
+- **Album detail** — full tracklist, credits, and an image gallery with a lightbox (swipe to change image on mobile) plus a spinning turntable animation, and a short **Wikipedia description** ("About this album") pulled from the album's Wikipedia article.
 
 ### Discogs integration
 
@@ -81,6 +81,7 @@ vinyl-library/
 │   ├── search.js            # Discogs barcode → release search proxy
 │   ├── release.js           # Discogs release detail proxy
 │   ├── spotify.js           # Spotify album resolution (client-credentials)
+│   ├── wikipedia.js         # Wikipedia album description proxy
 │   └── config.js            # Which integrations are enabled
 ├── lib/
 │   ├── store.js             # Blob JSON store, scrypt hashing, sessions, cookies
@@ -118,6 +119,7 @@ vinyl-library/
 | `GET` | `/api/search?barcode=` | Discogs barcode → release search |
 | `GET` | `/api/release?id=` | Discogs release detail (normalized) |
 | `GET` | `/api/spotify?q=` | Spotify album resolution |
+| `GET` | `/api/wikipedia?title=&artist=` | Wikipedia album description (intro extract) |
 | `GET` | `/api/config` | Which integrations are enabled |
 
 ---

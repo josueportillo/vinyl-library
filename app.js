@@ -992,6 +992,7 @@ function renderDetail(a) {
         ${a.style && a.style.length ? `<div class="preview-line"><b>Style:</b> ${esc(a.style.join(", "))}</div>` : ""}
         <div class="preview-line muted"><b>Barcode:</b> ${esc(a.barcode || "—")}</div>
         <div class="preview-line muted"><b>Added:</b> ${esc(new Date(a.addedAt).toLocaleDateString())}</div>
+        <div id="wikiBlurb" class="wiki-blurb hidden"></div>
         ${tracklistHtml(a.tracklist, true)}
         ${creditsHtml(a.credits)}
         <div class="streaming">
@@ -1014,6 +1015,41 @@ function renderDetail(a) {
     document.getElementById("btnRemove").addEventListener("click", () => removeAlbum(a._id));
   }
   enrichSpotify(a);
+  loadWikipedia(a);
+}
+
+// ---------- Wikipedia description (detail view) ----------
+function renderWiki(box, wiki) {
+  box.classList.remove("hidden");
+  box.innerHTML = `
+    <div class="wiki-label">About this album</div>
+    <p class="wiki-text">${esc(wiki.extract)}</p>
+    ${wiki.url ? `<a class="wiki-source" href="${esc(wiki.url)}" target="_blank" rel="noopener">Source: Wikipedia ↗</a>` : ""}`;
+}
+
+async function loadWikipedia(a) {
+  const box = document.getElementById("wikiBlurb");
+  if (!box) return;
+  if (a.wiki) {
+    renderWiki(box, a.wiki);
+    return;
+  }
+  const q = [a.artist, a.title].filter(Boolean).join(" ").trim();
+  if (!q) return; // nothing to search with — leave the block hidden
+  box.classList.remove("hidden");
+  box.innerHTML = `<div class="wiki-loading">Loading description…</div>`;
+  const r = await api(
+    `/api/wikipedia?title=${encodeURIComponent(a.title || "")}&artist=${encodeURIComponent(a.artist || "")}`
+  );
+  // If the user opened another album while this request was in flight, the
+  // placeholder element has been replaced — don't paint stale content.
+  if (document.getElementById("wikiBlurb") !== box) return;
+  if (r.ok && r.data && r.data.extract) {
+    a.wiki = { title: r.data.title, extract: r.data.extract, url: r.data.url };
+    renderWiki(box, a.wiki);
+  } else {
+    box.classList.add("hidden");
+  }
 }
 
 async function removeAlbum(_id) {
