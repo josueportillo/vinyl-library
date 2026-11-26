@@ -55,7 +55,6 @@ body {
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 12px 20px;
   padding-top: calc(12px + env(safe-area-inset-top));
@@ -77,7 +76,8 @@ body {
 }
 .count { font-size: 0.74rem; color: var(--muted); font-weight: 500; }
 
-.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.topbar-auth { display: flex; align-items: center; gap: 8px; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -405,7 +405,27 @@ h2 { margin: 8px 0 6px; font-size: 1.5rem; font-weight: 700; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 560px) {
-  .topbar { padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top)); }
+  .topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+  .brand { order: 1; }
+  .topbar-auth { order: 2; margin-left: auto; }
+  .topbar-actions {
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
+    margin-left: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+  }
+  .topbar-actions::-webkit-scrollbar { display: none; }
+  .topbar-actions .btn { flex: 0 0 auto; white-space: nowrap; }
   .logo { width: 34px; height: 34px; }
   .brand-text h1 { font-size: 0.98rem; }
   .btn { padding: 9px 12px; font-size: 0.82rem; }
@@ -648,7 +668,7 @@ h2 { margin: 8px 0 6px; font-size: 1.5rem; font-weight: 700; }
 .discogs-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
 @media (max-width: 560px) {
-  .topbar-actions .user-chip { display: none; }
+  .topbar-auth .user-chip { display: none; }
   .auth-card { margin: 16px auto; padding: 24px 18px; }
 }
 

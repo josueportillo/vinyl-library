@@ -219,10 +219,13 @@ async function submitAuth() {
 
 function renderTopbar() {
   const area = $("#authArea");
+  const corner = $("#authCorner");
   if (viewingUsername) {
     area.innerHTML = currentUser
-      ? `<button class="btn btn-ghost" data-action="back">← My library</button>
-         <span class="user-chip">${esc(currentUser.username)}</span>
+      ? `<button class="btn btn-ghost" data-action="back">← My library</button>`
+      : ``;
+    corner.innerHTML = currentUser
+      ? `<span class="user-chip">${esc(currentUser.username)}</span>
          <button class="btn btn-ghost" data-action="logout">Log out</button>`
       : `<button class="btn btn-ghost" data-action="login">Log in</button>`;
     return;
@@ -233,11 +236,11 @@ function renderTopbar() {
       <button class="btn btn-ghost" data-action="friends">Friends</button>
       <button class="btn btn-ghost" data-action="share">Share</button>
       <button class="btn btn-ghost" data-action="digger">Crate Digger</button>
-      <button class="btn btn-primary" data-action="scan">Scan</button>
-      <span class="user-chip">${esc(currentUser.username)}</span>
-      <button class="btn btn-ghost" data-action="logout" title="Log out">Log out</button>`;
+      <button class="btn btn-primary" data-action="scan">Scan</button>`;
+    corner.innerHTML = `<span class="user-chip">${esc(currentUser.username)}</span><button class="btn btn-ghost" data-action="logout" title="Log out">Log out</button>`;
   } else {
-    area.innerHTML = `<button class="btn btn-primary" data-action="login">Log in</button>`;
+    area.innerHTML = ``;
+    corner.innerHTML = `<button class="btn btn-primary" data-action="login">Log in</button>`;
   }
 }
 
@@ -1386,8 +1389,8 @@ function toggleFilters() {
 
 // ---------- Events ----------
 function bindEvents() {
-  // auth area (delegated)
-  $("#authArea").addEventListener("click", (e) => {
+  // auth area + corner (delegated)
+  const onAuthAction = (e) => {
     const btn = e.target.closest("[data-action]");
     if (!btn) return;
     const a = btn.dataset.action;
@@ -1399,7 +1402,9 @@ function bindEvents() {
     else if (a === "logout") doLogout();
     else if (a === "login") showView("viewAuth");
     else if (a === "back") window.location.href = "/";
-  });
+  };
+  $("#authArea").addEventListener("click", onAuthAction);
+  $("#authCorner").addEventListener("click", onAuthAction);
 
   // auth view
   $("#tabLogin").addEventListener("click", () => setAuthMode("login"));

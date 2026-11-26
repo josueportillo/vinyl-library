@@ -16,6 +16,17 @@ Every time a feature is added or changed, add a new entry under `[Unreleased]`, 
 
 ---
 
+## [1.2.1] — 2026-11-26 — Mobile topbar fixes
+
+### Changed
+- **Mobile topbar** — on small screens the header now stacks into two rows: "Vinyl Library" (with record count) on the first line, and the nav buttons (Discogs, Friends, Share, Crate Digger, Scan) on the second line in a single horizontally scrollable strip, so they no longer wrap and spill under the title.
+- **Log in / Log out pinned top-right** — the account control now sits in the top-right corner on the same line as the app title (instead of at the end of the scrollable nav strip), so it's always visible without scrolling.
+
+### Fixed
+- Topbar buttons no longer wrap out of place or overlap the "Vinyl Library" title on mobile.
+
+---
+
 ## [1.2.0] — 2026-11-26 — Free-text search, photo browsing & Crate Digger
 
 ### Added
