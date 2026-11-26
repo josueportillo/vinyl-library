@@ -340,6 +340,8 @@ h2 { margin: 8px 0 6px; font-size: 1.5rem; font-weight: 700; }
 .result-title { font-weight: 700; font-size: 0.95rem; font-family: var(--font-display); }
 .result-sub { font-size: 0.8rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
 .result-arrow { font-size: 1.4rem; color: var(--muted); }
+.result-color { display: flex; align-items: center; gap: 7px; margin-top: 5px; font-size: 0.8rem; font-weight: 600; color: var(--text); }
+.color-dot { width: 11px; height: 11px; border-radius: 999px; display: inline-block; flex: none; border: 1px solid var(--border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25); }
 
 /* ---------- Preview / detail ---------- */
 .preview { margin-top: 8px; }

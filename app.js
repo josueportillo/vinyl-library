@@ -680,6 +680,21 @@ function bindInlineActions() {
   document.getElementById("btnBackAgain")?.addEventListener("click", () => showView("viewLibrary"));
 }
 
+const VINYL_COLOR_SWATCH = {
+  black: "#15171a", blue: "#2b6cf0", red: "#e33b3b", green: "#1fa24f",
+  yellow: "#e8c31a", orange: "#f07a1c", purple: "#8b3bd6", pink: "#f26bb8",
+  white: "#e8e6ec", clear: "#8b93a3", transparent: "#8b93a3", gold: "#d8b03c",
+  silver: "#b8bcc6", brown: "#7c4a1d", grey: "#6b7280", gray: "#6b7280",
+  teal: "#18a7a0", turquoise: "#1fc0b0", magenta: "#e039d0", violet: "#7c3aed",
+  amber: "#e8a41a", beige: "#d9c9a8", cream: "#efe7cf"
+};
+
+function colorSwatch(colorStr) {
+  const c = (colorStr || "").toLowerCase();
+  for (const k in VINYL_COLOR_SWATCH) if (c.includes(k)) return VINYL_COLOR_SWATCH[k];
+  return "#f5a524";
+}
+
 function renderResults() {
   $("#resultsSummary").textContent = scanQuery
     ? `${scanResults.length} releases matched “${esc(scanQuery)}”. Pick yours:`
@@ -690,11 +705,16 @@ function renderResults() {
     const row = document.createElement("button");
     row.className = "result-row";
     const labels = (x.label || []).slice(0, 2).join(", ") || "—";
+    const color = Array.isArray(x.color) && x.color.length ? x.color.join(", ") : "";
+    const colorLine = color
+      ? `<div class="result-color"><span class="color-dot" style="background:${colorSwatch(color)}"></span>${esc(color)}</div>`
+      : "";
     row.innerHTML = `
       <div class="result-main">
         <div class="result-title">${esc(x.title || "Untitled")}</div>
         <div class="result-sub">${esc(fmtList(x.format))} · ${esc(x.year || "?")} · ${esc(labels)}</div>
         <div class="result-sub">${esc(x.country || "")}${x.catno ? " · " + esc(x.catno) : ""}</div>
+        ${colorLine}
       </div>
       <div class="result-arrow">›</div>`;
     row.addEventListener("click", () => selectRelease(x.id));

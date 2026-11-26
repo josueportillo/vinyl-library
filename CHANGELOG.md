@@ -16,6 +16,20 @@ Every time a feature is added or changed, add a new entry under `[Unreleased]`, 
 
 ---
 
+## [1.3.0] — 2026-11-26 — Richer search results (year, label, country & vinyl color)
+
+### Added
+- **Vinyl color in search results** — each vinyl pressing now shows a small color swatch dot plus the color text (e.g. "Mint", "Crystal Clear", "Red / Blue Splatter") when the edition has a non-black vinyl color, so you can tell it's the right edition before opening it.
+- **Year, label & country in search results** — search result rows now also show the release year, label, and country/region, alongside the existing artist/title/format, making it easier to identify the exact edition at a glance.
+
+### Changed
+- **Search endpoint enrichment** — the server-side Discogs search proxy now fetches each vinyl result's release detail (concurrency-limited and time-bounded) to extract the vinyl color from the format's free-text field, with word-boundary matching so words like "Remastered" (→ "red") and "White Label" (→ "white", a promo pressing) aren't misread as colors. Falls back to an empty color when Discogs rate-limits.
+
+### Fixed
+- Fixed vinyl color never appearing — the color was being read from Discogs' `descriptions` field (which holds "LP", "Album", etc.) instead of the `text` field where the actual color lives.
+
+---
+
 ## [1.2.1] — 2026-11-26 — Mobile topbar fixes
 
 ### Changed
