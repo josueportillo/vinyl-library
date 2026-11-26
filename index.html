@@ -98,18 +98,23 @@
       </div>
     </section>
 
-    <!-- SCAN -->
+    <!-- SCAN / ADD -->
     <section id="viewScan" class="view hidden">
       <div class="narrow">
         <button id="btnBackLibrary" class="btn btn-ghost btn-back">← Library</button>
-        <h2>Scan a barcode</h2>
-        <p class="hint">Point your camera at the barcode on the album sleeve. Keep it steady inside the box.</p>
+        <h2>Add a record</h2>
+        <p class="hint">Scan the barcode on the sleeve, or search Discogs by album, artist, or label.</p>
         <div id="qrReader" class="scanner"></div>
         <div id="scanStatus" class="scan-status">Starting camera…</div>
-        <div class="divider"><span>or type it</span></div>
+        <div class="divider"><span>or type a barcode</span></div>
         <div class="manual-row">
           <input id="manualBarcode" type="text" inputmode="numeric" placeholder="EAN / UPC barcode" class="search-input" autocomplete="off">
           <button id="btnManualLookup" class="btn btn-primary">Look up</button>
+        </div>
+        <div class="divider"><span>or search</span></div>
+        <div class="manual-row">
+          <input id="textSearch" type="search" placeholder="Album name, artist, label…" class="search-input" autocomplete="off">
+          <button id="btnTextSearch" class="btn btn-primary">Search</button>
         </div>
       </div>
     </section>
@@ -136,6 +141,23 @@
       <div class="wide">
         <button id="btnBackFromDetail" class="btn btn-ghost btn-back">← Library</button>
         <div id="detailBox" class="detail"></div>
+      </div>
+    </section>
+
+    <!-- CRATE DIGGER -->
+    <section id="viewCrateDigger" class="view hidden">
+      <div class="narrow">
+        <button id="btnBackFromDigger" class="btn btn-ghost btn-back">← Library</button>
+        <h2>Crate Digger</h2>
+        <p class="hint">Scan any barcode to instantly preview the album — a Spotify player and its Wikipedia write-up, without adding it to your library. Perfect for flipping through crates at the store.</p>
+        <div id="diggerReader" class="scanner"></div>
+        <div id="diggerStatus" class="scan-status">Starting camera…</div>
+        <div class="divider"><span>or type it</span></div>
+        <div class="manual-row">
+          <input id="diggerBarcode" type="text" inputmode="numeric" placeholder="EAN / UPC barcode" class="search-input" autocomplete="off">
+          <button id="btnDiggerLookup" class="btn btn-primary">Preview</button>
+        </div>
+        <div id="diggerResult" class="digger-result"></div>
       </div>
     </section>
   </main>

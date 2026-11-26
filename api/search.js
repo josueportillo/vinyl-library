@@ -1,4 +1,8 @@
-// Vercel serverless function: proxy Discogs barcode -> release search.
+// Vercel serverless function: proxy Discogs release search.
+// Supports two modes:
+//   ?barcode=<digits>  -> barcode -> release search (for the "Scan" flow)
+//   ?q=<free text>     -> full-text search by album / artist / label (for the
+//                         "search Discogs" flow)
 // Hides the Discogs token (if set) server-side and avoids browser CORS issues.
 
 const DISCOGS_TOKEN = process.env.DISCOGS_TOKEN || "";
@@ -13,13 +17,23 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "no-store");
 
-  const raw = String(req.query.barcode || "");
-  const barcode = raw.replace(/[^0-9]/g, "");
-  if (!barcode || barcode.length < 8 || barcode.length > 14) {
-    return res.status(400).json({ error: "Barcode must be 8-14 digits." });
+  const barcode = String(req.query.barcode || "").replace(/[^0-9]/g, "");
+  const q = String(req.query.q || "").trim();
+
+  let qs;
+  if (barcode) {
+    if (barcode.length < 8 || barcode.length > 14) {
+      return res.status(400).json({ error: "Barcode must be 8-14 digits." });
+    }
+    qs = new URLSearchParams({ barcode, type: "release", per_page: "10", page: "1" });
+  } else if (q) {
+    // type=release biases the results toward records rather than artist/label
+    // pages; q is Discogs' free-text search (matches title, artist, label, …).
+    qs = new URLSearchParams({ q, type: "release", per_page: "25", page: "1" });
+  } else {
+    return res.status(400).json({ error: "Provide a barcode or a search query (q)." });
   }
 
-  const qs = new URLSearchParams({ barcode, type: "release", per_page: "10", page: "1" });
   const headers = { "User-Agent": UA };
   if (DISCOGS_TOKEN) headers.Authorization = `Discogs token=${DISCOGS_TOKEN}`;
 
@@ -43,8 +57,9 @@ module.exports = async function handler(req, res) {
       country: x.country || "",
       catno: x.catno || "",
       resource_url: x.resource_url || "",
+      thumb: x.thumb || x.cover_image || "",
     }));
-    return res.status(200).json({ barcode, count: results.length, results });
+    return res.status(200).json({ barcode: barcode || "", query: q, count: results.length, results });
   } catch (e) {
     return res.status(502).json({ error: "Could not reach Discogs.", message: String(e && e.message) });
   }

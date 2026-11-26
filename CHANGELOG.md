@@ -9,10 +9,23 @@ Every time a feature is added or changed, add a new entry under `[Unreleased]`, 
 ## [Unreleased]
 
 ### Added
-- **Wikipedia description** on the album detail view — a short "About this album" paragraph pulled from the album's Wikipedia article (the intro extract, resolved server-side by searching artist + title), shown below the turntable animation and above the tracklist, with a "Source: Wikipedia" link for attribution.
+- (none yet)
 
 ### Changed
 - (none yet)
+
+---
+
+## [1.2.0] — 2026-11-26 — Free-text search, photo browsing & Crate Digger
+
+### Added
+- **Free-text Discogs search** — add a record by searching album name, artist, or label (no barcode needed). The scan screen now offers a "search" box alongside barcode scanning; results flow through the same pressing-selection and preview screens.
+- **Photo browsing before you add** — the pre-add preview now shows a browsable gallery of every photo in the release (front/back cover, labels, inner sleeve), so you can confirm it's the right edition before adding it — thumbnails plus a click-to-enlarge lightbox with swipe.
+- **Crate Digger** — a new section that turns any barcode into an instant preview: a Spotify mini player for the album plus its Wikipedia write-up, without adding it to your library. Built for flipping through unknown crates at a record store.
+- **Wikipedia description** on the album detail view — a short "About this album" paragraph pulled from the album's Wikipedia article (the intro extract, resolved server-side by searching artist + title), shown below the turntable animation and above the tracklist, with a "Source: Wikipedia" link for attribution.
+
+### Changed
+- **Release detail now returns the barcode** (from Discogs identifiers) so albums added by text search also record their barcode, and the preview shows the edition's real barcode.
 
 ---
 

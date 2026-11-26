@@ -40,6 +40,10 @@ module.exports = async function handler(req, res) {
     const label = dedupe((d.labels || []).map((l) => l.name));
     const catno = dedupe((d.labels || []).map((l) => l.catno)).join(", ");
 
+    // The EAN/UPC barcode (when Discogs lists one) — lets text-searched albums
+    // also record their barcode, and lets the preview show the edition's barcode.
+    const barcode = ((d.identifiers || []).find((i) => /barcode/i.test(i.type || "")) || {}).value || "";
+
     // release-level credits (producers, engineers, featured artists, etc.)
     const credits = (d.extraartists || [])
       .filter((a) => a.name)
@@ -87,6 +91,7 @@ module.exports = async function handler(req, res) {
       descriptions,
       formatNames,
       country: d.country || "",
+      barcode,
       cover,
       thumb,
       images,

@@ -6,9 +6,12 @@ let viewingUsername = null;  // set when viewing another user's library (share/b
 let library = [];
 let scanResults = [];
 let scanBarcode = "";
+let scanQuery = "";
 let currentPreview = null;
 let scanner = null;
 let scanLock = false;
+let diggerScanner = null;
+let diggerLock = false;
 let authMode = "login";      // "login" | "signup"
 let googleEnabled = false;
 let spotifyEnabled = false;
@@ -229,6 +232,7 @@ function renderTopbar() {
       <button class="btn btn-ghost" data-action="discogs">Discogs</button>
       <button class="btn btn-ghost" data-action="friends">Friends</button>
       <button class="btn btn-ghost" data-action="share">Share</button>
+      <button class="btn btn-ghost" data-action="digger">Crate Digger</button>
       <button class="btn btn-primary" data-action="scan">Scan</button>
       <span class="user-chip">${esc(currentUser.username)}</span>
       <button class="btn btn-ghost" data-action="logout" title="Log out">Log out</button>`;
@@ -616,18 +620,21 @@ function manualLookup() {
 }
 
 // ---------- Discogs lookup ----------
-async function lookupBarcode(barcode) {
+async function runDiscogsSearch(qs, loadingSummary) {
   showView("viewResults");
-  $("#resultsSummary").textContent = `Barcode ${barcode} — searching Discogs…`;
+  $("#resultsSummary").textContent = loadingSummary;
   $("#resultsList").innerHTML = `<div class="loading">Searching…</div>`;
   try {
-    const r = await api(`/api/search?barcode=${encodeURIComponent(barcode)}`);
+    const r = await api(`/api/search?${qs}`);
     if (!r.ok) throw new Error(r.data?.error || "Search failed");
-    scanBarcode = r.data.barcode || barcode;
+    if (r.data.barcode) scanBarcode = r.data.barcode;
+    if (r.data.query) scanQuery = r.data.query;
     scanResults = r.data.results || [];
     if (scanResults.length === 0) {
       $("#resultsSummary").textContent = "";
-      $("#resultsList").innerHTML = noMatchHtml(`No Discogs release found for barcode ${esc(scanBarcode)}.`);
+      $("#resultsList").innerHTML = noMatchHtml(scanQuery
+        ? `No Discogs release found for “${esc(scanQuery)}”.`
+        : `No Discogs release found for barcode ${esc(scanBarcode)}.`);
       bindInlineActions();
       return;
     }
@@ -638,6 +645,25 @@ async function lookupBarcode(barcode) {
     $("#resultsList").innerHTML = noMatchHtml(esc(e.message || "Something went wrong."));
     bindInlineActions();
   }
+}
+
+function lookupBarcode(barcode) {
+  scanQuery = "";
+  scanBarcode = barcode;
+  return runDiscogsSearch(`barcode=${encodeURIComponent(barcode)}`, `Barcode ${barcode} — searching Discogs…`);
+}
+
+function lookupText(q) {
+  scanBarcode = "";
+  scanQuery = q;
+  return runDiscogsSearch(`q=${encodeURIComponent(q)}`, `Searching Discogs for “${q}”…`);
+}
+
+function textSearch() {
+  const v = ($("#textSearch").value || "").trim();
+  if (!v) { toast("Enter an album, artist, or label to search.", true); return; }
+  stopScanner();
+  lookupText(v);
 }
 
 function noMatchHtml(msg) {
@@ -652,7 +678,9 @@ function bindInlineActions() {
 }
 
 function renderResults() {
-  $("#resultsSummary").textContent = `${scanResults.length} pressings matched barcode ${esc(scanBarcode)}. Pick yours:`;
+  $("#resultsSummary").textContent = scanQuery
+    ? `${scanResults.length} releases matched “${esc(scanQuery)}”. Pick yours:`
+    : `${scanResults.length} pressings matched barcode ${esc(scanBarcode)}. Pick yours:`;
   const list = $("#resultsList");
   list.innerHTML = "";
   scanResults.forEach((x) => {
@@ -770,10 +798,10 @@ function renderPreview(d) {
   box.innerHTML = `
     <div class="preview-layout">
       <div class="preview-media">
-        <div class="preview-cover">
-          ${d.cover ? `<img src="${esc(d.cover)}" alt="${esc(d.title)}">` : `<div class="cover-placeholder lg">♪</div>`}
-        </div>
-        <div class="media-note">${(d.images || []).length} image${(d.images || []).length === 1 ? "" : "s"} in this release</div>
+        ${(d.images || []).length
+          ? galleryHtml(d.images)
+          : `<div class="preview-cover">${d.cover ? `<img src="${esc(d.cover)}" alt="${esc(d.title)}">` : `<div class="cover-placeholder lg">♪</div>`}</div>`}
+        <div class="media-note">${(d.images || []).length} image${(d.images || []).length === 1 ? "" : "s"} — tap a thumbnail to browse, click to enlarge</div>
       </div>
       <div class="preview-info">
         <div class="preview-artist">${esc(d.artist || "Unknown artist")}</div>
@@ -788,7 +816,7 @@ function renderPreview(d) {
         ${d.catno ? `<div class="preview-line"><b>Cat#:</b> ${esc(d.catno)}</div>` : ""}
         ${d.genres && d.genres.length ? `<div class="preview-line"><b>Genre:</b> ${esc(d.genres.join(", "))}</div>` : ""}
         ${d.styles && d.styles.length ? `<div class="preview-line"><b>Style:</b> ${esc(d.styles.join(", "))}</div>` : ""}
-        <div class="preview-line muted"><b>Barcode:</b> ${esc(scanBarcode)}</div>
+        <div class="preview-line muted"><b>Barcode:</b> ${esc(d.barcode || scanBarcode || "—")}</div>
         ${tracklistHtml(d.tracklist, true)}
         ${creditsHtml(d.credits)}
       </div>
@@ -800,6 +828,7 @@ function renderPreview(d) {
         : `<button class="btn btn-primary" id="btnAdd">Add to library</button>
            <button class="btn btn-ghost" id="btnBackResults">← Back to results</button>`}
     </div>`;
+  setupGallery(box, d.images);
   if (!already) document.getElementById("btnAdd").addEventListener("click", () => addToLibrary(d));
   document.getElementById("btnBackResults")?.addEventListener("click", () => {
     if (scanResults.length > 1) showView("viewResults");
@@ -811,7 +840,7 @@ async function addToLibrary(d) {
   const album = {
     _id: uid(),
     discogsId: d.id,
-    barcode: scanBarcode,
+    barcode: d.barcode || scanBarcode || "",
     artist: d.artist || "",
     title: d.title || "",
     year: d.year || "",
@@ -854,8 +883,142 @@ async function addToLibrary(d) {
 
 function resetScanState() {
   scanBarcode = "";
+  scanQuery = "";
   scanResults = [];
   currentPreview = null;
+}
+
+// ---------- Crate Digger (scan -> instant Spotify + Wikipedia preview) ----------
+async function startDigger() {
+  showView("viewCrateDigger");
+  diggerLock = false;
+  $("#diggerResult").innerHTML = "";
+  const status = $("#diggerStatus");
+  status.classList.remove("error");
+  status.textContent = "Starting camera…";
+
+  if (!window.Html5Qrcode) {
+    status.textContent = "Barcode library failed to load — use manual entry below.";
+    status.classList.add("error");
+    return;
+  }
+
+  await stopDiggerScanner();
+  diggerScanner = new Html5Qrcode("diggerReader");
+  const formats = [
+    Html5QrcodeSupportedFormats.EAN_13,
+    Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E,
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.CODE_39,
+    Html5QrcodeSupportedFormats.ITF,
+  ];
+  try {
+    await diggerScanner.start(
+      { facingMode: "environment" },
+      {
+        fps: 10,
+        formatsToSupport: formats,
+        qrbox: (vw, vh) => ({ width: Math.min(vw * 0.82, 320), height: Math.min(vh * 0.5, 130) }),
+      },
+      (decodedText) => {
+        if (diggerLock) return;
+        diggerLock = true;
+        const barcode = String(decodedText).replace(/[^0-9]/g, "");
+        stopDiggerScanner();
+        diggerLookup(barcode);
+      },
+      () => {}
+    );
+    status.textContent = "Camera active — align the barcode inside the box.";
+  } catch (err) {
+    status.textContent = "Couldn't access the camera: " + (err && err.message ? err.message : err);
+    status.classList.add("error");
+  }
+}
+
+async function stopDiggerScanner() {
+  if (diggerScanner) {
+    const s = diggerScanner;
+    diggerScanner = null;
+    try { await s.stop(); } catch (e) {}
+    try { s.clear(); } catch (e) {}
+  }
+}
+
+function diggerManualLookup() {
+  const v = ($("#diggerBarcode").value || "").replace(/[^0-9]/g, "");
+  if (!v) { toast("Enter a barcode first.", true); return; }
+  stopDiggerScanner();
+  diggerLookup(v);
+}
+
+async function diggerLookup(barcode) {
+  const box = $("#diggerResult");
+  box.innerHTML = `<div class="loading">Looking up barcode ${esc(barcode)}…</div>`;
+  try {
+    const sr = await api(`/api/search?barcode=${encodeURIComponent(barcode)}`);
+    if (!sr.ok) throw new Error(sr.data?.error || "Lookup failed");
+    const results = sr.data.results || [];
+    if (!results.length) throw new Error(`No Discogs release found for barcode ${barcode}.`);
+
+    const rel = await api(`/api/release?id=${encodeURIComponent(results[0].id)}`);
+    if (!rel.ok || !rel.data) throw new Error(rel.data?.error || "Could not load release details.");
+    const d = rel.data;
+    const q = [d.artist, d.title].filter(Boolean).join(" ").trim() || d.title;
+
+    const [spot, wiki] = await Promise.all([
+      api(`/api/spotify?q=${encodeURIComponent(q)}`),
+      api(`/api/wikipedia?title=${encodeURIComponent(d.title || "")}&artist=${encodeURIComponent(d.artist || "")}`),
+    ]);
+
+    renderDiggerResult(box, d, q, spot, wiki);
+  } catch (e) {
+    box.innerHTML = `<div class="error-inline"><p>${esc(e.message || "Something went wrong.")}</p>
+      <button class="btn btn-ghost" id="btnDiggerAgain">Scan again</button></div>`;
+    document.getElementById("btnDiggerAgain")?.addEventListener("click", () => startDigger());
+  }
+}
+
+function renderDiggerResult(box, d, q, spot, wiki) {
+  const spotId = spot.ok && spot.data && spot.data.id ? spot.data.id : null;
+  const spotUrl = spotId
+    ? spot.data.url
+    : `https://open.spotify.com/search/${encodeURIComponent(q)}`;
+  const spotFallback = spot.status === 501
+    ? `<div class="muted" style="padding:12px">Spotify isn't configured — use the search link above.</div>`
+    : `<div class="muted" style="padding:12px">No Spotify match found — use the search link above.</div>`;
+  const wikiHtml = (wiki.ok && wiki.data && wiki.data.extract)
+    ? `<div class="wiki-blurb">
+        <div class="wiki-label">About this album</div>
+        <p class="wiki-text">${esc(wiki.data.extract)}</p>
+        ${wiki.data.url ? `<a class="wiki-source" href="${esc(wiki.data.url)}" target="_blank" rel="noopener">Source: Wikipedia ↗</a>` : ""}
+      </div>`
+    : "";
+  box.innerHTML = `
+    <div class="digger-card">
+      <div class="digger-head">
+        ${d.cover ? `<img class="digger-cover" src="${esc(d.cover)}" alt="${esc(d.title)}">` : `<div class="digger-cover placeholder">♪</div>`}
+        <div class="digger-info">
+          <div class="preview-artist">${esc(d.artist || "Unknown artist")}</div>
+          <h2 class="preview-title">${esc(d.title)}</h2>
+          <div class="preview-meta">
+            ${d.year ? `<span>${esc(d.year)}</span>` : ""}
+            ${d.country ? `<span>${esc(d.country)}</span>` : ""}
+            ${d.label && d.label.length ? `<span>${esc(d.label.join(", "))}</span>` : ""}
+          </div>
+        </div>
+      </div>
+      <div class="streaming">
+        <div class="streaming-title">Listen now</div>
+        <div class="streaming-links">
+          <a class="streaming-btn spotify" href="${esc(spotUrl)}" target="_blank" rel="noopener">Open in Spotify</a>
+        </div>
+        <div id="diggerEmbed" class="spotify-embed">${spotId ? spotifyIframe(spotId) : spotFallback}</div>
+      </div>
+      ${wikiHtml}
+    </div>`;
 }
 
 // ---------- Streaming links + Spotify preview ----------
@@ -1229,6 +1392,7 @@ function bindEvents() {
     if (!btn) return;
     const a = btn.dataset.action;
     if (a === "scan") startScan();
+    else if (a === "digger") startDigger();
     else if (a === "discogs") openDiscogs();
     else if (a === "friends") openFriends();
     else if (a === "share") openShare();
@@ -1255,6 +1419,12 @@ function bindEvents() {
   $("#btnBackFromDetail").addEventListener("click", () => showView("viewLibrary"));
   $("#btnManualLookup").addEventListener("click", manualLookup);
   $("#manualBarcode").addEventListener("keydown", (e) => { if (e.key === "Enter") manualLookup(); });
+  $("#btnTextSearch").addEventListener("click", textSearch);
+  $("#textSearch").addEventListener("keydown", (e) => { if (e.key === "Enter") textSearch(); });
+  // crate digger
+  $("#btnBackFromDigger").addEventListener("click", async () => { await stopDiggerScanner(); showView("viewLibrary"); });
+  $("#btnDiggerLookup").addEventListener("click", diggerManualLookup);
+  $("#diggerBarcode").addEventListener("keydown", (e) => { if (e.key === "Enter") diggerManualLookup(); });
   $("#libSearch").addEventListener("input", () => renderLibrary(false));
   $("#libSort").addEventListener("change", renderLibrary);
   $$(".view-toggle .vt").forEach((b) => b.addEventListener("click", () => setViewMode(b.dataset.view)));

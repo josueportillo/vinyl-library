@@ -481,6 +481,28 @@ h2 { margin: 8px 0 6px; font-size: 1.5rem; font-weight: 700; }
 .c-role { width: 150px; flex: none; color: var(--muted); text-align: right; }
 .c-name { flex: 1; }
 
+/* ---------- Crate Digger ---------- */
+.digger-result { margin-top: 18px; }
+.digger-card {
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-3));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+.digger-head { display: flex; gap: 18px; align-items: center; margin-bottom: 16px; }
+.digger-cover {
+  width: 120px; height: 120px; flex: none;
+  border-radius: var(--radius-sm); object-fit: cover;
+  box-shadow: var(--shadow); background: var(--bg-3); border: 1px solid var(--border);
+}
+.digger-cover.placeholder { display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--muted); }
+.digger-info { min-width: 0; }
+.digger-info .preview-title { margin: 0 0 8px; }
+@media (max-width: 560px) {
+  .digger-head { flex-direction: column; align-items: center; text-align: center; }
+  .digger-cover { width: 150px; height: 150px; }
+}
+
 /* ---------- Wikipedia blurb (detail view) ---------- */
 .wiki-blurb {
   margin-top: 14px;

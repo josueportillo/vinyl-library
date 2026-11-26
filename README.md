@@ -16,6 +16,8 @@ Built as a 100% web app (no native build) with a responsive mobile + desktop UI.
 - **Manual barcode entry** — type an EAN/UPC when you don't have the sleeve handy.
 - **Discogs lookup** — the barcode is resolved against the Discogs API, which auto-fills the artist, title, year, label, catalog number, genre, style, country, cover art, full tracklist, credits, band members, and gallery images.
 - **Pressing selection** — when one barcode matches several releases (common with represses), you pick the exact pressing before adding it.
+- **Free-text search** — find a record by album name, artist, or label when you don't have the barcode handy.
+- **Photo browsing before adding** — flip through every photo in the release (front/back cover, labels, inner sleeve) to confirm it's the right edition before it goes into your library.
 
 ### Browsing the collection
 
@@ -38,6 +40,10 @@ Built as a 100% web app (no native build) with a responsive mobile + desktop UI.
 
 - **"Listen on" buttons** on every album page — Spotify and YouTube Music search links.
 - **Spotify mini player** — when Spotify credentials are configured, the backend resolves an "artist + album" query to a real Spotify album ID (client-credentials flow with token caching) and embeds an in-page player so you can preview tracks without leaving the app.
+
+### Crate Digger
+
+- **Instant in-store preview** — scan any barcode and immediately get a Spotify mini player for that album plus its Wikipedia write-up, without adding it to your library. Built for flipping through unknown crates at a record store.
 
 ### Accounts & sharing
 
@@ -116,7 +122,7 @@ vinyl-library/
 | `GET` | `/api/discogs-oauth/start` | Begin Discogs OAuth (302) |
 | `GET` | `/api/discogs-oauth/callback` | Discogs OAuth callback |
 | `POST` | `/api/discogs-oauth/disconnect` | Disconnect Discogs |
-| `GET` | `/api/search?barcode=` | Discogs barcode → release search |
+| `GET` | `/api/search?barcode=` or `?q=` | Discogs release search (barcode or free text) |
 | `GET` | `/api/release?id=` | Discogs release detail (normalized) |
 | `GET` | `/api/spotify?q=` | Spotify album resolution |
 | `GET` | `/api/wikipedia?title=&artist=` | Wikipedia album description (intro extract) |
