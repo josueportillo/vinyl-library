@@ -12,10 +12,27 @@
   --danger: #ff5b60;
   --radius: 16px;
   --radius-sm: 12px;
+  --radius-cover: 0px; /* square sleeves — Plastic's "no rounded corners" rule */
   --shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
   --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.38);
-  --font-display: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* ---- myplastic.app design tokens (editorial light palette + fluid type scale) ---- */
+  --plastic-bg: #f5f5f5;
+  --plastic-ink: #090d0e;
+  --plastic-accent: #ce3300;
+  --plastic-muted: #4d4d4d;
+  --plastic-sleeve: #e7e7e7;
+  --plastic-bg-dark: #090d0e;
+  --plastic-fg-dark: #f5f5f5;
+
+  --fs-display: clamp(2.875rem, 5vw + 1rem, 4.75rem);   /* ~46–76px */
+  --fs-h1: clamp(2.5rem, 4vw + 1rem, 3.75rem);          /* ~40–60px */
+  --fs-h2: clamp(2rem, 3vw + 1rem, 2.875rem);           /* ~32–46px */
+  --fs-h3: clamp(1.3125rem, 1.5vw + 0.75rem, 1.5rem);   /* ~21–24px */
+  --fs-body: clamp(0.9375rem, 0.25vw + 0.875rem, 1.0625rem); /* ~15–17px */
+  --fs-small: 0.875rem;                                  /* 14px */
 }
 
 * { box-sizing: border-box; }
@@ -117,8 +134,9 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; }
 @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .narrow { max-width: 640px; margin: 0 auto; }
 
-h1, h2, h3 { font-family: var(--font-display); }
-h2 { margin: 8px 0 6px; font-size: 1.5rem; font-weight: 700; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 500; }
+h2 { margin: 8px 0 6px; font-size: var(--fs-h2); line-height: 1.1; letter-spacing: -0.01em; }
+h3 { font-size: var(--fs-h3); }
 .hint { color: var(--muted); margin: 0 0 16px; font-size: 0.9rem; }
 
 /* ---------- Toolbar ---------- */
@@ -341,7 +359,42 @@ h2 { margin: 8px 0 6px; font-size: 1.5rem; font-weight: 700; }
 .result-sub { font-size: 0.8rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
 .result-arrow { font-size: 1.4rem; color: var(--muted); }
 .result-color { display: flex; align-items: center; gap: 7px; margin-top: 5px; font-size: 0.8rem; font-weight: 600; color: var(--text); }
-.color-dot { width: 11px; height: 11px; border-radius: 999px; display: inline-block; flex: none; border: 1px solid var(--border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25); }
+.color-disc {
+  --disc-color: #f5a524;
+  width: 24px; height: 24px; flex: none;
+  border-radius: 50%;
+  position: relative;
+  background:
+    repeating-radial-gradient(circle at 50% 50%,
+      rgba(0, 0, 0, 0.22) 0 1.2px,
+      rgba(255, 255, 255, 0.14) 1.2px 2.4px),
+    var(--disc-color);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 0 4px rgba(0, 0, 0, 0.30),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+  animation: color-disc-spin 3.2s linear infinite;
+}
+.color-disc::before {
+  content: "";
+  position: absolute; inset: 34%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 38%, #3a3a46, #14141a);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+.color-disc::after {
+  content: "";
+  position: absolute; left: 50%; top: 50%;
+  width: 14%; height: 14%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f2eef5, #6b7280);
+}
+@keyframes color-disc-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
 /* ---------- Preview / detail ---------- */
 .preview { margin-top: 8px; }
@@ -798,8 +851,26 @@ h2 { margin: 8px 0 6px; font-size: 1.5rem; font-weight: 700; }
   width: 68%; height: 68%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: repeating-radial-gradient(circle at 50% 50%, #16161b 0 2px, #07070a 2px 4px);
-  box-shadow: inset 0 0 0 1px #000, inset 0 0 20px rgba(0, 0, 0, 0.8), 0 3px 10px rgba(0, 0, 0, 0.6);
+  --vinyl-color: #16161b;
+  --vinyl-streak: #f2f2f5;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.22) 0 2px, rgba(0, 0, 0, 0) 2px 4px),
+    radial-gradient(circle at 50% 50%, var(--vinyl-color), color-mix(in srgb, var(--vinyl-color), #000 22%));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 0 22px rgba(0, 0, 0, 0.38),
+    0 3px 10px rgba(0, 0, 0, 0.6);
+}
+.tt-record.marbled {
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.18) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    radial-gradient(circle at 30% 32%, var(--vinyl-streak) 0 14%, transparent 30%),
+    radial-gradient(circle at 70% 20%, var(--vinyl-streak) 0 10%, transparent 24%),
+    radial-gradient(circle at 66% 74%, var(--vinyl-streak) 0 13%, transparent 28%),
+    radial-gradient(circle at 24% 66%, var(--vinyl-streak) 0 9%, transparent 22%),
+    radial-gradient(circle at 46% 48%, var(--vinyl-streak) 0 5%, transparent 16%),
+    radial-gradient(circle at 78% 52%, var(--vinyl-streak) 0 7%, transparent 18%),
+    radial-gradient(circle at 50% 50%, var(--vinyl-color), color-mix(in srgb, var(--vinyl-color), #000 20%));
 }
 .tt-record.spinning { animation: tt-spin 3.4s linear infinite; }
 @keyframes tt-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
@@ -878,6 +949,15 @@ h2 { margin: 8px 0 6px; font-size: 1.5rem; font-weight: 700; }
 
 @media (max-width: 560px) {
   .detail-media { width: 100%; max-width: 340px; margin: 0 auto; }
+}
+
+/* ---------- Square sleeves (Plastic's "no rounded corners" rule) ---------- */
+.album-card,
+.preview-cover,
+.gallery-main,
+.digger-cover,
+.crate-sleeve-inner {
+  border-radius: var(--radius-cover);
 }
 
 /* ---------- Reduced motion ---------- */

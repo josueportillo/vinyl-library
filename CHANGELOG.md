@@ -16,6 +16,28 @@ Every time a feature is added or changed, add a new entry under `[Unreleased]`, 
 
 ---
 
+## [1.4.0] — 2026-11-26 — Colored vinyl rendering & editorial typography
+
+### Added
+- **Rendered vinyl disc in the actual pressing color** — the album detail turntable now draws the vinyl in the edition's real color (read from Discogs' format free-text) instead of a generic black disc, with the grooves etched over the color. Works for existing library albums too, backfilled automatically on open.
+- **Marbled / splatter / swirl rendering** — pressings whose color text contains "marbled", "marble", "splatter", "swirl", or "smoke" now render with a layered marble streak pattern in the pressing's colors (two-color pressings use the second color as the streak; single-color pressings auto-pick a contrasting streak).
+- **Shared color-extraction helper (`lib/colors.js`)** — word-boundary color matching with a "white label" exclusion and a full keyword list, used consistently across search, release, and collection import.
+- **Color persisted on add & import** — the release endpoint and the Discogs collection import now extract and store the vinyl color (previously only search results had it).
+- **`PATCH /api/library`** — new endpoint to persist the automatic color backfill for existing albums.
+- **Design-token CSS variables block** — a Plastic-inspired palette (`--plastic-bg`, `--plastic-ink`, `--plastic-accent`, `--plastic-muted`, `--plastic-sleeve`) and a full fluid `clamp()` type scale (`--fs-display` … `--fs-small`) dropped into `:root`, ready to drive a future light theme.
+- **Archivo typography** — replaced Bricolage Grotesque + Inter with Archivo (400/500/600/700/800), headings at medium weight (500) with the fluid type scale.
+
+### Changed
+- **Square covers** — album cards, preview covers, gallery main image, Crate Digger cover, and crate sleeves no longer round their corners, driven by a new `--radius-cover: 0px` token.
+- **Spinning disc in search results** — the search-result color swatch (a flat colored dot) is now a small rendered vinyl disc in the pressing's color with a continuous spin animation.
+
+### Fixed
+- **Colored discs showed black** — three compounding causes: (1) the "black" swatch `#15171a` was indistinguishable from the dark card background, (2) substring matching checked "black" first so multi-color pressings like "Red / Black" collapsed to black, and (3) the disc was drawn too dark to read. All three corrected.
+- **Color never stored for added/imported albums** — the release and collection paths ignored Discogs' `formats[].text` free-text (where the color lives), so library albums had no color at all and the turntable fell back to black.
+- **"Remastered" no longer false-matches "red"** — word-boundary matching fixed latent false positives.
+
+---
+
 ## [1.3.0] — 2026-11-26 — Richer search results (year, label, country & vinyl color)
 
 ### Added

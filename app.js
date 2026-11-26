@@ -120,7 +120,7 @@ function buildSearchText(a) {
   };
   walk([
     a.artist, a.title, a.year, a.released, a.label, a.catno, a.barcode, a.country,
-    a.genre, a.style, a.format, a.descriptions, a.formatNames, a.edition, a.members,
+    a.genre, a.style, a.format, a.descriptions, a.formatNames, a.color, a.edition, a.members,
   ]);
   if (Array.isArray(a.credits)) a.credits.forEach((c) => walk([c.name, c.role]));
   if (Array.isArray(a.tracklist)) a.tracklist.forEach((t) => walk([t.title, t.position]));
@@ -134,6 +134,7 @@ function normalizeAlbum(a) {
   if (!Array.isArray(a.label)) a.label = [];
   if (!Array.isArray(a.descriptions)) a.descriptions = [];
   if (!Array.isArray(a.formatNames)) a.formatNames = [];
+  if (!Array.isArray(a.color)) a.color = [];
   if (!Array.isArray(a.images)) a.images = a.cover ? [{ resource_url: a.cover, type: "primary" }] : [];
   if (!Array.isArray(a.credits)) a.credits = [];
   if (!Array.isArray(a.members)) a.members = [];
@@ -681,7 +682,7 @@ function bindInlineActions() {
 }
 
 const VINYL_COLOR_SWATCH = {
-  black: "#15171a", blue: "#2b6cf0", red: "#e33b3b", green: "#1fa24f",
+  black: "#26292f", blue: "#2b6cf0", red: "#e33b3b", green: "#1fa24f",
   yellow: "#e8c31a", orange: "#f07a1c", purple: "#8b3bd6", pink: "#f26bb8",
   white: "#e8e6ec", clear: "#8b93a3", transparent: "#8b93a3", gold: "#d8b03c",
   silver: "#b8bcc6", brown: "#7c4a1d", grey: "#6b7280", gray: "#6b7280",
@@ -691,8 +692,65 @@ const VINYL_COLOR_SWATCH = {
 
 function colorSwatch(colorStr) {
   const c = (colorStr || "").toLowerCase();
-  for (const k in VINYL_COLOR_SWATCH) if (c.includes(k)) return VINYL_COLOR_SWATCH[k];
+  // Word-boundary match so "red" is never matched inside "remastered".
+  // Distinctive colors are tested first and black last, so a multi-color
+  // pressing like "Red / Black" resolves to red instead of collapsing to black.
+  const order = [
+    "red", "blue", "green", "yellow", "orange", "purple", "pink", "gold",
+    "silver", "teal", "turquoise", "magenta", "violet", "amber", "brown",
+    "beige", "cream", "white", "clear", "transparent", "grey", "gray", "black",
+  ];
+  for (const k of order) {
+    if (new RegExp(`\\b${k}\\b`).test(c)) return VINYL_COLOR_SWATCH[k];
+  }
   return "#f5a524";
+}
+
+// Relative luminance of a hex color (0..1) — used to pick a contrasting
+// marbling streak (light streaks on dark vinyl, dark streaks on light vinyl).
+function hexLum(hex) {
+  const h = String(hex || "").replace("#", "");
+  const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  if (v.length !== 6) return 0.5;
+  const n = parseInt(v, 16);
+  if (Number.isNaN(n)) return 0.5;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+}
+
+// Parse a pressing's color string into the pieces the turntable disc needs:
+//   base    — hex of the dominant vinyl color
+//   streak  — hex of the secondary color (marbling), or a contrast shade
+//   marbled — true when the pressing is marbled/splatter/swirl/smoke
+function discColorInfo(colorStr) {
+  const c = (colorStr || "").toLowerCase();
+  const marbled = /\b(marbled|marble|splatter|swirl|smoke)\b/.test(c);
+  const order = [
+    "red", "blue", "green", "yellow", "orange", "purple", "pink", "gold",
+    "silver", "teal", "turquoise", "magenta", "violet", "amber", "brown",
+    "beige", "cream", "white", "clear", "transparent", "grey", "gray", "black",
+  ];
+  const found = [];
+  for (const k of order) {
+    if (new RegExp(`\\b${k}\\b`).test(c)) found.push(k);
+  }
+  const base = VINYL_COLOR_SWATCH[found[0]] || "#26292f";
+  let streak = found.length > 1 ? VINYL_COLOR_SWATCH[found[1]] : "";
+  if (!streak) {
+    streak = hexLum(base) > 0.55 ? "#14141a" : "#f2f2f5";
+  }
+  return { base, streak, marbled };
+}
+
+// Color words for a library album come from its stored `color` field when
+// present, otherwise from `descriptions` / `format` (which Discogs fills with
+// the pressing's vinyl color, e.g. "Red", "Blue Marbled", "Clear").
+function albumColorString(a) {
+  if (Array.isArray(a.color) && a.color.length) return a.color.join(", ");
+  const parts = [];
+  if (Array.isArray(a.descriptions)) parts.push(...a.descriptions);
+  if (Array.isArray(a.format)) parts.push(...a.format);
+  return parts.join(", ");
 }
 
 function renderResults() {
@@ -707,7 +765,7 @@ function renderResults() {
     const labels = (x.label || []).slice(0, 2).join(", ") || "—";
     const color = Array.isArray(x.color) && x.color.length ? x.color.join(", ") : "";
     const colorLine = color
-      ? `<div class="result-color"><span class="color-dot" style="background:${colorSwatch(color)}"></span>${esc(color)}</div>`
+      ? `<div class="result-color"><span class="color-disc" style="--disc-color:${colorSwatch(color)}"></span>${esc(color)}</div>`
       : "";
     row.innerHTML = `
       <div class="result-main">
@@ -881,6 +939,7 @@ async function addToLibrary(d) {
     members: d.members || [],
     descriptions: d.descriptions || [],
     formatNames: d.formatNames || [],
+    color: d.color || [],
     edition: classifyEdition(d.descriptions || []),
     tracklist: d.tracklist || [],
     discogsUrl: d.uri ? d.uri.replace("api.discogs.com", "www.discogs.com").replace("/releases/", "/release/") : "",
@@ -1082,11 +1141,14 @@ function turntableHtml(a) {
   const art = a.cover || "";
   const labelStyle = art ? `style="background-image:url('${esc(art)}')"` : "";
   const labelText = art ? "" : `<span>${esc(a.title || "♪")}</span>`;
+  const ci = discColorInfo(albumColorString(a));
+  const recCls = `tt-record spinning${ci.marbled ? " marbled" : ""}`;
+  const recStyle = `style="--vinyl-color:${ci.base};--vinyl-streak:${ci.streak}"`;
   return `
     <div class="turntable" aria-label="Turntable: ${esc(a.title || "album")}">
       <div class="tt-base"></div>
       <div class="tt-platter"></div>
-      <div class="tt-record spinning">
+      <div class="${recCls}" ${recStyle}>
         <div class="tt-label ${art ? "has-art" : ""}" ${labelStyle}>${labelText}</div>
         <div class="tt-spindle"></div>
       </div>
@@ -1127,7 +1189,8 @@ async function openDetail(_id) {
 
   // Lazy enrichment: albums imported from a Discogs collection have basic info
   // only (cover/title/artist), so fetch full release details on first open.
-  if ((!a.tracklist || !a.tracklist.length) && a.discogsId) {
+  // Also backfills color for albums added before color extraction existed.
+  if ((!a.tracklist || !a.tracklist.length || !a.color || !a.color.length) && a.discogsId) {
     $("#detailBox").innerHTML = `<div class="loading">Loading full details…</div>`;
     const r = await api(`/api/release?id=${encodeURIComponent(a.discogsId)}`);
     if (r.ok) {
@@ -1138,6 +1201,7 @@ async function openDetail(_id) {
       a.members = (d.members && d.members.length) ? d.members : a.members;
       a.descriptions = (d.descriptions && d.descriptions.length) ? d.descriptions : a.descriptions;
       a.formatNames = (d.formatNames && d.formatNames.length) ? d.formatNames : a.formatNames;
+      if (d.color && d.color.length) a.color = d.color;
       a.cover = a.cover || d.cover;
       a.thumb = a.thumb || d.thumb;
       if (!a.label || !a.label.length) a.label = d.label || a.label;
@@ -1146,6 +1210,10 @@ async function openDetail(_id) {
       if (!a.catno) a.catno = d.catno;
       a.edition = classifyEdition((a.descriptions && a.descriptions.length) ? a.descriptions : a.format);
       a.searchText = buildSearchText(a);
+      // Persist newly enriched color so it survives reload (best-effort).
+      if (d.color && d.color.length) {
+        api("/api/library", "PATCH", { discogsId: a.discogsId, color: d.color });
+      }
     }
   }
 

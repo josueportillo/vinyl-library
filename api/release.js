@@ -4,6 +4,7 @@
 
 const DISCOGS_TOKEN = process.env.DISCOGS_TOKEN || "";
 const UA = "VinylLibrary/1.0 (personal project)";
+const { extractColors } = require("../lib/colors.js");
 
 function dedupe(arr) {
   if (!Array.isArray(arr)) return arr ? [String(arr)] : [];
@@ -35,6 +36,7 @@ module.exports = async function handler(req, res) {
     const formats = (d.formats || []).map((f) =>
       [f.name, ...(f.descriptions || [])].filter(Boolean).join(", ")
     );
+    const color = extractColors(d.formats);
     const descriptions = dedupe((d.formats || []).flatMap((f) => f.descriptions || []));
     const formatNames = dedupe((d.formats || []).map((f) => f.name));
     const label = dedupe((d.labels || []).map((l) => l.name));
@@ -90,6 +92,7 @@ module.exports = async function handler(req, res) {
       format: formats,
       descriptions,
       formatNames,
+      color,
       country: d.country || "",
       barcode,
       cover,

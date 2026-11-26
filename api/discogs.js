@@ -1,5 +1,6 @@
 const S = require("../lib/store.js");
 const { fetchCollection } = require("../lib/discogs.js");
+const { extractColors } = require("../lib/colors.js");
 
 function dedupe(arr) {
   if (!Array.isArray(arr)) return arr ? [String(arr)] : [];
@@ -29,6 +30,7 @@ function fromBasicInfo(bi) {
     artist: dedupe((bi.artists || []).map((a) => a.name)).join(", "),
     year: bi.year || "",
     format: (bi.formats || []).map((f) => [f.name, ...(f.descriptions || [])].filter(Boolean).join(", ")),
+    color: extractColors(bi.formats),
     label: dedupe((bi.labels || []).map((l) => l.name)),
     catno: dedupe((bi.labels || []).map((l) => l.catno)).join(", "),
     genre: bi.genres || [],

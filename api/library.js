@@ -41,6 +41,21 @@ module.exports = async function handler(req, res) {
     return S.json(res, 200, { username, library: lib, discogs });
   }
 
+  if (req.method === "PATCH") {
+    // Lightweight update for lazy enrichment (color, tracklist, credits, etc.).
+    const body = S.getBody(req);
+    const id = String(body && body.discogsId || "");
+    if (!id) return S.json(res, 400, { error: "discogsId required" });
+    const lib = (await S.readJson(libPath)) || [];
+    const album = lib.find((a) => String(a.discogsId) === id);
+    if (!album) return S.json(res, 404, { error: "Album not in library" });
+    for (const k of ["color", "descriptions", "formatNames", "tracklist", "credits", "members", "images", "cover", "thumb", "label", "genre", "style", "catno"]) {
+      if (body[k] !== undefined) album[k] = body[k];
+    }
+    await S.writeJson(libPath, lib);
+    return S.json(res, 200, { username, library: lib });
+  }
+
   if (req.method === "DELETE") {
     const id = String(req.query.id || "");
     const lib = (await S.readJson(libPath)) || [];
